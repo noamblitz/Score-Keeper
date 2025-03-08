@@ -94,16 +94,18 @@ fun MainScreen(
         ) {
             Text(
                 text = leftScore.toString(),
-                style = MaterialTheme.typography.display1.copy(
-                    fontSize = 60.sp
-                ),
-                modifier = Modifier
-                    .weight(1f)
-                    .combinedClickable(
-                        onClick = onLeftScoreClick,
-                        onLongClick = onLeftScoreLongClick
+                    style = MaterialTheme.typography.display1.copy(
+                        fontSize = 60.sp
                     ),
-                textAlign = TextAlign.Center
+                    modifier = Modifier
+                        .weight(1f)
+                        .combinedClickable(
+                            onClick = onLeftScoreClick,
+                            onLongClick = onLeftScoreLongClick
+                        ),
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    softWrap = false
             )
             Box(
                 modifier = Modifier
@@ -123,16 +125,18 @@ fun MainScreen(
             }
             Text(
                 text = rightScore.toString(),
-                style = MaterialTheme.typography.display1.copy(
-                    fontSize = 60.sp
-                ),
-                modifier = Modifier
-                    .weight(1f)
-                    .combinedClickable(
-                        onClick = onRightScoreClick,
-                        onLongClick = onRightScoreLongClick
+                    style = MaterialTheme.typography.display1.copy(
+                        fontSize = 60.sp
                     ),
-                textAlign = TextAlign.Center
+                    modifier = Modifier
+                        .weight(1f)
+                        .combinedClickable(
+                            onClick = onRightScoreClick,
+                            onLongClick = onRightScoreLongClick
+                        ),
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    softWrap = false
             )
         }
     }

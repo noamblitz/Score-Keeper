@@ -43,7 +43,26 @@ fun MainApp(
     scoreHistory: List<Pair<Int, Int>>,
     onStartWearableActivityClick: () -> Unit
 ) {
-    val isPortrait = LocalConfiguration.current.screenWidthDp < LocalConfiguration.current.screenHeightDp
+    val configuration = LocalConfiguration.current
+    val isPortrait = configuration.screenWidthDp < configuration.screenHeightDp
+    
+    fun calculateFontSize(score: Int): Int {
+        val digitCount = score.toString().length
+        val baseSize = if (isPortrait) {
+            when (digitCount) {
+                1 -> 200
+                2 -> 160
+                else -> 120
+            }
+        } else {
+            when (digitCount) {
+                1 -> 120
+                2 -> 100
+                else -> 80
+            }
+        }
+        return baseSize
+    }
     
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -64,10 +83,12 @@ fun MainApp(
                 Text(
                     text = leftScore.toString(),
                     style = MaterialTheme.typography.h1.copy(
-                        fontSize = if (isPortrait) 200.sp else 120.sp
+                        fontSize = calculateFontSize(leftScore).sp
                     ),
                     modifier = Modifier.weight(1f),
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    softWrap = false
                 )
                 
                 // Score History
@@ -108,10 +129,12 @@ fun MainApp(
                 Text(
                     text = rightScore.toString(),
                     style = MaterialTheme.typography.h1.copy(
-                        fontSize = if (isPortrait) 200.sp else 120.sp
+                        fontSize = calculateFontSize(rightScore).sp
                     ),
                     modifier = Modifier.weight(1f),
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    softWrap = false
                 )
             }
             
