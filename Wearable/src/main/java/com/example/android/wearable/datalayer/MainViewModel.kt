@@ -19,9 +19,7 @@ import android.annotation.SuppressLint
 import android.app.Application
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import androidx.annotation.StringRes
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
@@ -55,16 +53,6 @@ class MainViewModel(
     MessageClient.OnMessageReceivedListener,
     CapabilityClient.OnCapabilityChangedListener {
 
-    private val _events = mutableStateListOf<Event>()
-
-    /**
-     * The list of events from the clients.
-     */
-    val events: List<Event> = _events
-
-    /**
-     * The currently received image (if any), available to display.
-     */
     var image by mutableStateOf<Bitmap?>(null)
         private set
 
@@ -104,41 +92,23 @@ class MainViewModel(
 
     @SuppressLint("VisibleForTests")
     override fun onDataChanged(dataEvents: DataEventBuffer) {
-        // Add all events to the event log
-        _events.addAll(
-            dataEvents.map { dataEvent ->
-                val title = when (dataEvent.type) {
-                    DataEvent.TYPE_CHANGED -> R.string.data_item_changed
-                    DataEvent.TYPE_DELETED -> R.string.data_item_deleted
-                    else -> R.string.data_item_unknown
-                }
-                Event(
-                    title = title,
-                    text = dataEvent.dataItem.toString()
-
-                )
-            }
-        )
-        // Do additional work for specific events
         dataEvents.forEach { dataEvent ->
-            when (dataEvent.type) {
-                DataEvent.TYPE_CHANGED -> {
-                    when (dataEvent.dataItem.uri.path) {
-                        DataLayerListenerService.IMAGE_PATH -> {
-                            loadPhotoJob.cancel()
-                            loadPhotoJob = viewModelScope.launch {
-                                image = loadBitmap(
-                                    DataMapItem.fromDataItem(dataEvent.dataItem)
-                                        .dataMap
-                                        .getAsset(DataLayerListenerService.IMAGE_KEY)
-                                )
-                            }
+            if (dataEvent.type == DataEvent.TYPE_CHANGED) {
+                when (dataEvent.dataItem.uri.path) {
+                    DataLayerListenerService.IMAGE_PATH -> {
+                        loadPhotoJob.cancel()
+                        loadPhotoJob = viewModelScope.launch {
+                            image = loadBitmap(
+                                DataMapItem.fromDataItem(dataEvent.dataItem)
+                                    .dataMap
+                                    .getAsset(DataLayerListenerService.IMAGE_KEY)
+                            )
                         }
-                        "/scores" -> {
-                            val dataMap = DataMapItem.fromDataItem(dataEvent.dataItem).dataMap
-                            leftScore = dataMap.getInt("left_score")
-                            rightScore = dataMap.getInt("right_score")
-                        }
+                    }
+                    "/scores" -> {
+                        val dataMap = DataMapItem.fromDataItem(dataEvent.dataItem).dataMap
+                        leftScore = dataMap.getInt("left_score")
+                        rightScore = dataMap.getInt("right_score")
                     }
                 }
             }
@@ -146,21 +116,11 @@ class MainViewModel(
     }
 
     override fun onMessageReceived(messageEvent: MessageEvent) {
-        _events.add(
-            Event(
-                title = R.string.message,
-                text = messageEvent.toString()
-            )
-        )
+        // Not used
     }
 
     override fun onCapabilityChanged(capabilityInfo: CapabilityInfo) {
-        _events.add(
-            Event(
-                title = R.string.capability_changed,
-                text = capabilityInfo.toString()
-            )
-        )
+        // Not used
     }
 
     private suspend fun loadBitmap(asset: Asset?): Bitmap? {
@@ -173,6 +133,7 @@ class MainViewModel(
             }
         }
     }
+
     companion object {
         private const val TAG = "MainViewModel"
 
@@ -186,11 +147,3 @@ class MainViewModel(
         }
     }
 }
-
-/**
- * A data holder describing a client event.
- */
-data class Event(
-    @StringRes val title: Int,
-    val text: String
-)

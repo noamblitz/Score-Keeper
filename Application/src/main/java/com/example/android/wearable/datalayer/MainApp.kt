@@ -48,7 +48,6 @@ import androidx.compose.ui.unit.dp
  */
 @Composable
 fun MainApp(
-    events: List<Event>,
     image: Bitmap?,
     isCameraSupported: Boolean,
     apiAvailable: Boolean,
@@ -137,19 +136,6 @@ fun MainApp(
             }
             Divider()
         }
-        items(events) { event ->
-            Column {
-                Text(
-                    stringResource(id = event.title),
-                    style = MaterialTheme.typography.subtitle1
-                )
-                Text(
-                    event.text,
-                    style = MaterialTheme.typography.body2
-                )
-            }
-            Divider()
-        }
     }
 }
 
@@ -157,32 +143,6 @@ fun MainApp(
 @Composable
 fun MainAppPreview() {
     MainApp(
-        events = listOf(
-            Event(
-                title = R.string.data_item_changed,
-                text = "Event 1"
-            ),
-            Event(
-                title = R.string.data_item_deleted,
-                text = "Event 2"
-            ),
-            Event(
-                title = R.string.data_item_unknown,
-                text = "Event 3"
-            ),
-            Event(
-                title = R.string.message_from_watch,
-                text = "Event 4"
-            ),
-            Event(
-                title = R.string.data_item_changed,
-                text = "Event 5"
-            ),
-            Event(
-                title = R.string.data_item_deleted,
-                text = "Event 6"
-            )
-        ),
         image = null,
         isCameraSupported = true,
         leftScore = 0,

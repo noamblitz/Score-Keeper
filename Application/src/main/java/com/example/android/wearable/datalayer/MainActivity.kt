@@ -129,7 +129,6 @@ class MainActivity : ComponentActivity() {
                     apiAvailable = isAvailable(capabilityClient)
                 }
                 MainApp(
-                    events = clientDataViewModel.events,
                     image = clientDataViewModel.image,
                     isCameraSupported = isCameraSupported,
                     apiAvailable = apiAvailable,

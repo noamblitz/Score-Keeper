@@ -35,8 +35,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.wear.compose.foundation.lazy.items
-import androidx.wear.compose.material.Card
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.navigation.SwipeDismissableNavHost
@@ -83,7 +81,6 @@ fun MainScreen(
 ) {
     MainScreen(
         mainViewModel.image,
-        mainViewModel.events,
         mainViewModel.leftScore,
         mainViewModel.rightScore,
         onShowNodesList,
@@ -97,7 +94,6 @@ fun MainScreen(
 @Composable
 fun MainScreen(
     image: Bitmap?,
-    events: List<Event>,
     leftScore: Int,
     rightScore: Int,
     onShowNodesList: () -> Unit,
@@ -113,10 +109,6 @@ fun MainScreen(
     )
 
     ScreenScaffold(scrollState = columnState) {
-            /*
-             * The Horologist [ScalingLazyColumn] takes care of the horizontal and vertical
-             * padding for the list, so there is no need to specify it.
-             */
         ScalingLazyColumn(
             columnState = columnState,
             modifier = Modifier
@@ -183,34 +175,6 @@ fun MainScreen(
                     }
                 }
             }
-
-            if (events.isEmpty()) {
-                item {
-                    Text(
-                        stringResource(id = R.string.waiting),
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Center
-                    )
-                }
-            } else {
-                items(events) { event ->
-                    Card(
-                        onClick = {},
-                        enabled = false
-                    ) {
-                        Column {
-                            Text(
-                                stringResource(id = event.title),
-                                style = MaterialTheme.typography.title3
-                            )
-                            Text(
-                                event.text,
-                                style = MaterialTheme.typography.body2
-                            )
-                        }
-                    }
-                }
-            }
         }
     }
 }
@@ -220,32 +184,6 @@ fun MainScreen(
 @Composable
 fun MainScreenPreviewEvents() {
     MainScreen(
-        events = listOf(
-            Event(
-                title = R.string.data_item_changed,
-                text = "Event 1"
-            ),
-            Event(
-                title = R.string.data_item_deleted,
-                text = "Event 2"
-            ),
-            Event(
-                title = R.string.data_item_unknown,
-                text = "Event 3"
-            ),
-            Event(
-                title = R.string.message,
-                text = "Event 4"
-            ),
-            Event(
-                title = R.string.data_item_changed,
-                text = "Event 5"
-            ),
-            Event(
-                title = R.string.data_item_deleted,
-                text = "Event 6"
-            )
-        ),
         image = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888).apply {
             eraseColor(Color.WHITE)
         },
@@ -263,7 +201,6 @@ fun MainScreenPreviewEvents() {
 @Composable
 fun MainScreenPreviewEmpty() {
     MainScreen(
-        events = emptyList(),
         image = null,
         leftScore = 0,
         rightScore = 0,
