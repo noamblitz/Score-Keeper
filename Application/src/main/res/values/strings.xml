@@ -14,7 +14,7 @@
      limitations under the License.
 -->
 <resources>
-    <string name="app_name">DataLayer</string>
+    <string name="app_name">Score Keeper</string>
     <string name="start_wearable_activity">Start Score Keeper on Watch</string>
     <string name="take_photo">Take a Photo</string>
     <string name="send_photo">Send Photo</string>
