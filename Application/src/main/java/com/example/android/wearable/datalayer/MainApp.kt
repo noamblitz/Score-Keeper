@@ -17,11 +17,13 @@ package com.example.android.wearable.datalayer
 
 import android.graphics.Bitmap
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -50,11 +52,34 @@ fun MainApp(
     image: Bitmap?,
     isCameraSupported: Boolean,
     apiAvailable: Boolean,
+    leftScore: Int,
+    rightScore: Int,
     onTakePhotoClick: () -> Unit,
     onSendPhotoClick: () -> Unit,
     onStartWearableActivityClick: () -> Unit
 ) {
     LazyColumn(contentPadding = PaddingValues(16.dp)) {
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                Text(
+                    text = leftScore.toString(),
+                    style = MaterialTheme.typography.h3,
+                    modifier = Modifier.weight(1f),
+                    textAlign = TextAlign.Center
+                )
+                Text(
+                    text = rightScore.toString(),
+                    style = MaterialTheme.typography.h3,
+                    modifier = Modifier.weight(1f),
+                    textAlign = TextAlign.Center
+                )
+            }
+            Divider()
+        }
+
         if (!apiAvailable) {
             item {
                 Text(
@@ -160,6 +185,8 @@ fun MainAppPreview() {
         ),
         image = null,
         isCameraSupported = true,
+        leftScore = 0,
+        rightScore = 0,
         onTakePhotoClick = {},
         onSendPhotoClick = {},
         onStartWearableActivityClick = {},

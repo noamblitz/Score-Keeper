@@ -133,6 +133,8 @@ class MainActivity : ComponentActivity() {
                     image = clientDataViewModel.image,
                     isCameraSupported = isCameraSupported,
                     apiAvailable = apiAvailable,
+                    leftScore = clientDataViewModel.leftScore,
+                    rightScore = clientDataViewModel.rightScore,
                     onTakePhotoClick = ::takePhoto,
                     onSendPhotoClick = ::sendPhoto,
                     onStartWearableActivityClick = ::startWearableActivity

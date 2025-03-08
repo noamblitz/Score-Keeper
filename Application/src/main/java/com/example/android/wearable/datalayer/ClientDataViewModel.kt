@@ -28,6 +28,7 @@ import com.google.android.gms.wearable.CapabilityInfo
 import com.google.android.gms.wearable.DataClient
 import com.google.android.gms.wearable.DataEvent
 import com.google.android.gms.wearable.DataEventBuffer
+import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.MessageClient
 import com.google.android.gms.wearable.MessageEvent
 
@@ -53,22 +54,38 @@ class ClientDataViewModel :
     var image by mutableStateOf<Bitmap?>(null)
         private set
 
+    var leftScore by mutableStateOf(0)
+        private set
+
+    var rightScore by mutableStateOf(0)
+        private set
+
     @SuppressLint("VisibleForTests")
     override fun onDataChanged(dataEvents: DataEventBuffer) {
         _events.addAll(
             dataEvents.map { dataEvent ->
                 val title = when (dataEvent.type) {
-                    DataEvent.TYPE_CHANGED -> R.string.data_item_changed
-                    DataEvent.TYPE_DELETED -> R.string.data_item_deleted
-                    else -> R.string.data_item_unknown
-                }
-
-                Event(
-                    title = title,
-                    text = dataEvent.dataItem.toString()
-                )
+                DataEvent.TYPE_CHANGED -> R.string.data_item_changed
+                DataEvent.TYPE_DELETED -> R.string.data_item_deleted
+                else -> R.string.data_item_unknown
             }
-        )
+
+            Event(
+                title = title,
+                text = dataEvent.dataItem.toString()
+            )
+        }
+    )
+
+    // Handle score updates
+    dataEvents.forEach { dataEvent ->
+        if (dataEvent.type == DataEvent.TYPE_CHANGED && 
+            dataEvent.dataItem.uri.path == "/scores") {
+            val dataMap = DataMapItem.fromDataItem(dataEvent.dataItem).dataMap
+            leftScore = dataMap.getInt("left_score")
+            rightScore = dataMap.getInt("right_score")
+        }
+    }
     }
 
     override fun onMessageReceived(messageEvent: MessageEvent) {
