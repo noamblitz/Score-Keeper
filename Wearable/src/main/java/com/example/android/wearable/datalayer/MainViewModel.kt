@@ -17,8 +17,6 @@ package com.example.android.wearable.datalayer
 
 import android.annotation.SuppressLint
 import android.app.Application
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -28,7 +26,6 @@ import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.AP
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import com.google.android.gms.wearable.Asset
 import com.google.android.gms.wearable.CapabilityClient
 import com.google.android.gms.wearable.CapabilityInfo
 import com.google.android.gms.wearable.DataClient
@@ -39,11 +36,8 @@ import com.google.android.gms.wearable.MessageClient
 import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import kotlinx.coroutines.withContext
 
 class MainViewModel(
     application: Application
@@ -53,16 +47,11 @@ class MainViewModel(
     MessageClient.OnMessageReceivedListener,
     CapabilityClient.OnCapabilityChangedListener {
 
-    var image by mutableStateOf<Bitmap?>(null)
-        private set
-
     var leftScore by mutableStateOf(0)
         private set
 
     var rightScore by mutableStateOf(0)
         private set
-
-    private var loadPhotoJob: Job = Job().apply { complete() }
 
     fun incrementLeftScore() {
         leftScore++
@@ -93,24 +82,11 @@ class MainViewModel(
     @SuppressLint("VisibleForTests")
     override fun onDataChanged(dataEvents: DataEventBuffer) {
         dataEvents.forEach { dataEvent ->
-            if (dataEvent.type == DataEvent.TYPE_CHANGED) {
-                when (dataEvent.dataItem.uri.path) {
-                    DataLayerListenerService.IMAGE_PATH -> {
-                        loadPhotoJob.cancel()
-                        loadPhotoJob = viewModelScope.launch {
-                            image = loadBitmap(
-                                DataMapItem.fromDataItem(dataEvent.dataItem)
-                                    .dataMap
-                                    .getAsset(DataLayerListenerService.IMAGE_KEY)
-                            )
-                        }
-                    }
-                    "/scores" -> {
-                        val dataMap = DataMapItem.fromDataItem(dataEvent.dataItem).dataMap
-                        leftScore = dataMap.getInt("left_score")
-                        rightScore = dataMap.getInt("right_score")
-                    }
-                }
+            if (dataEvent.type == DataEvent.TYPE_CHANGED && 
+                dataEvent.dataItem.uri.path == "/scores") {
+                val dataMap = DataMapItem.fromDataItem(dataEvent.dataItem).dataMap
+                leftScore = dataMap.getInt("left_score")
+                rightScore = dataMap.getInt("right_score")
             }
         }
     }
@@ -121,17 +97,6 @@ class MainViewModel(
 
     override fun onCapabilityChanged(capabilityInfo: CapabilityInfo) {
         // Not used
-    }
-
-    private suspend fun loadBitmap(asset: Asset?): Bitmap? {
-        if (asset == null) return null
-        val response =
-            Wearable.getDataClient(getApplication<Application>()).getFdForAsset(asset).await()
-        return response.inputStream.use { inputStream ->
-            withContext(Dispatchers.IO) {
-                BitmapFactory.decodeStream(inputStream)
-            }
-        }
     }
 
     companion object {
