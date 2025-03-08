@@ -58,8 +58,28 @@ class MainViewModel(
         sendScoreUpdate()
     }
 
+    fun decrementLeftScore() {
+        if (leftScore > 0) {
+            leftScore--
+            sendScoreUpdate()
+        }
+    }
+
     fun incrementRightScore() {
         rightScore++
+        sendScoreUpdate()
+    }
+
+    fun decrementRightScore() {
+        if (rightScore > 0) {
+            rightScore--
+            sendScoreUpdate()
+        }
+    }
+
+    fun resetScores() {
+        leftScore = 0
+        rightScore = 0
         sendScoreUpdate()
     }
 
