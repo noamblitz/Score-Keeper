@@ -17,6 +17,7 @@ package com.example.android.wearable.datalayer
 
 import android.annotation.SuppressLint
 import android.app.Application
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -64,14 +65,16 @@ class ClientDataViewModel(application: Application) :
                         val dataMap = DataMapItem.fromDataItem(dataItem).dataMap
                         leftScore = dataMap.getInt("left_score")
                         rightScore = dataMap.getInt("right_score")
+                        Log.d(TAG, "Found existing data: $leftScore - $rightScore")
                         return@forEach
                     }
                 }
 
                 // If no data exists, initialize with zeros
+                Log.d(TAG, "No existing data, initializing with zeros")
                 sendScoreUpdate()
             } catch (e: Exception) {
-                // Handle error
+                Log.e(TAG, "Error checking existing data", e)
             }
         }
     }
@@ -92,6 +95,7 @@ class ClientDataViewModel(application: Application) :
     private fun sendScoreUpdate() {
         viewModelScope.launch {
             try {
+                Log.d(TAG, "Sending score update: $leftScore - $rightScore")
                 val request = PutDataMapRequest.create("/scores").apply {
                     dataMap.putInt("left_score", leftScore)
                     dataMap.putInt("right_score", rightScore)
@@ -100,7 +104,7 @@ class ClientDataViewModel(application: Application) :
 
                 Wearable.getDataClient(getApplication()).putDataItem(request).await()
             } catch (e: Exception) {
-                // Handle error
+                Log.e(TAG, "Error sending score update", e)
             }
         }
     }
@@ -111,6 +115,7 @@ class ClientDataViewModel(application: Application) :
     }
 
     override fun onMessageReceived(messageEvent: MessageEvent) {
+        Log.d(TAG, "Message received: ${messageEvent.path}")
         when (messageEvent.path) {
             "/request_scores" -> {
                 sendScoreUpdate()
@@ -139,5 +144,9 @@ class ClientDataViewModel(application: Application) :
 
     override fun onCapabilityChanged(capabilityInfo: CapabilityInfo) {
         // Not used
+    }
+
+    companion object {
+        private const val TAG = "ClientDataViewModel"
     }
 }

@@ -42,6 +42,15 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // Register listeners immediately
+        dataClient.addListener(mainViewModel)
+        messageClient.addListener(mainViewModel)
+        capabilityClient.addListener(
+            mainViewModel,
+            Uri.parse("wear://"),
+            CapabilityClient.FILTER_REACHABLE
+        )
+
         setContent {
             MaterialTheme {
                 WearApp(mainViewModel)
@@ -51,6 +60,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        // Re-register listeners in case they were removed
         dataClient.addListener(mainViewModel)
         messageClient.addListener(mainViewModel)
         capabilityClient.addListener(

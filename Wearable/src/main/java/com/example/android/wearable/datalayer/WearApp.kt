@@ -60,7 +60,10 @@ fun WearApp(mainViewModel: MainViewModel) {
 fun MainScreen(
     mainViewModel: MainViewModel
 ) {
-    if (!mainViewModel.initialized) {
+    val leftScore = mainViewModel.leftScore
+    val rightScore = mainViewModel.rightScore
+
+    if (!mainViewModel.initialized || leftScore == null || rightScore == null) {
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
@@ -68,9 +71,9 @@ fun MainScreen(
             CircularProgressIndicator()
         }
     } else {
-        MainScreen(
-            mainViewModel.leftScore,
-            mainViewModel.rightScore,
+        ScoreScreen(
+            leftScore = leftScore,
+            rightScore = rightScore,
             onLeftScoreClick = { mainViewModel.incrementLeftScore() },
             onLeftScoreLongClick = { mainViewModel.decrementLeftScore() },
             onRightScoreClick = { mainViewModel.incrementRightScore() },
@@ -82,7 +85,7 @@ fun MainScreen(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun MainScreen(
+fun ScoreScreen(
     leftScore: Int,
     rightScore: Int,
     onLeftScoreClick: () -> Unit,
@@ -156,7 +159,7 @@ fun MainScreen(
 @WearPreviewFontScales
 @Composable
 fun MainScreenPreview() {
-    MainScreen(
+    ScoreScreen(
         leftScore = 0,
         rightScore = 0,
         onLeftScoreClick = {},

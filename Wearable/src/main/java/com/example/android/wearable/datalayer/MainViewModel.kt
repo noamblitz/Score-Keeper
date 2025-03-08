@@ -17,6 +17,7 @@ package com.example.android.wearable.datalayer
 
 import android.annotation.SuppressLint
 import android.app.Application
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -53,22 +54,48 @@ class MainViewModel(
     private var _initialized = mutableStateOf(false)
     val initialized: Boolean by _initialized
 
-    var leftScore by mutableStateOf(0)
-        private set
+    private var _leftScore = mutableStateOf<Int?>(null)
+    val leftScore: Int? by _leftScore
 
-    var rightScore by mutableStateOf(0)
-        private set
+    private var _rightScore = mutableStateOf<Int?>(null)
+    val rightScore: Int? by _rightScore
 
     init {
-        requestScores()
+        // First check for existing data
+        viewModelScope.launch {
+            try {
+                val dataItems = Wearable.getDataClient(getApplication())
+                    .dataItems
+                    .await()
+
+                var foundData = false
+                dataItems.forEach { dataItem ->
+                    if (dataItem.uri.path == "/scores") {
+                        val dataMap = DataMapItem.fromDataItem(dataItem).dataMap
+                        _leftScore.value = dataMap.getInt("left_score")
+                        _rightScore.value = dataMap.getInt("right_score")
+                        _initialized.value = true
+                        foundData = true
+                        Log.d(TAG, "Found existing data: ${_leftScore.value} - ${_rightScore.value}")
+                        return@forEach
+                    }
+                }
+
+                // If no existing data, request from phone
+                if (!foundData) {
+                    requestScores()
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error checking existing data", e)
+                requestScores()
+            }
+        }
     }
 
     private fun requestScores() {
         viewModelScope.launch {
             try {
-                // Wait a bit for data listeners to be set up
-                delay(500)
-
+                Log.d(TAG, "Requesting scores from phone")
                 val nodes = Wearable.getNodeClient(getApplication())
                     .connectedNodes
                     .await()
@@ -89,7 +116,10 @@ class MainViewModel(
                     }
                 }
             } catch (e: Exception) {
-                // If we timeout or can't reach phone, just start at 0,0
+                Log.e(TAG, "Error requesting scores", e)
+                // If we timeout or can't reach phone, show zeros
+                _leftScore.value = 0
+                _rightScore.value = 0
                 _initialized.value = true
             }
         }
@@ -130,7 +160,7 @@ class MainViewModel(
                     }
                 }.awaitAll()
             } catch (e: Exception) {
-                // Handle error
+                Log.e(TAG, "Error sending command: $path", e)
             }
         }
     }
@@ -141,9 +171,10 @@ class MainViewModel(
             if (dataEvent.type == DataEvent.TYPE_CHANGED && 
                 dataEvent.dataItem.uri.path == "/scores") {
                 val dataMap = DataMapItem.fromDataItem(dataEvent.dataItem).dataMap
-                leftScore = dataMap.getInt("left_score")
-                rightScore = dataMap.getInt("right_score")
+                _leftScore.value = dataMap.getInt("left_score")
+                _rightScore.value = dataMap.getInt("right_score")
                 _initialized.value = true
+                Log.d(TAG, "Received score update: ${_leftScore.value} - ${_rightScore.value}")
             }
         }
     }
