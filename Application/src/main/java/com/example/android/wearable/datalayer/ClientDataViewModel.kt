@@ -51,46 +51,88 @@ class ClientDataViewModel(application: Application) :
     private val _scoreHistory = mutableStateListOf<Pair<Int, Int>>()
     val scoreHistory: List<Pair<Int, Int>> = _scoreHistory
 
-    @SuppressLint("VisibleForTests")
-    override fun onDataChanged(dataEvents: DataEventBuffer) {
-        dataEvents.forEach { dataEvent ->
-            if (dataEvent.type == DataEvent.TYPE_CHANGED && 
-                dataEvent.dataItem.uri.path == "/scores") {
-                val dataMap = DataMapItem.fromDataItem(dataEvent.dataItem).dataMap
-                val newLeftScore = dataMap.getInt("left_score")
-                val newRightScore = dataMap.getInt("right_score")
-                
-                // Only add to history if scores changed
-                if (leftScore != newLeftScore || rightScore != newRightScore) {
-                    _scoreHistory.add(0, Pair(leftScore, rightScore))
-                    if (_scoreHistory.size > 5) {
-                        _scoreHistory.removeAt(5)
+    init {
+        // Check for existing data
+        viewModelScope.launch {
+            try {
+                val dataItems = Wearable.getDataClient(getApplication())
+                    .dataItems
+                    .await()
+
+                dataItems.forEach { dataItem ->
+                    if (dataItem.uri.path == "/scores") {
+                        val dataMap = DataMapItem.fromDataItem(dataItem).dataMap
+                        leftScore = dataMap.getInt("left_score")
+                        rightScore = dataMap.getInt("right_score")
+                        return@forEach
                     }
                 }
-                
-                leftScore = newLeftScore
-                rightScore = newRightScore
+
+                // If no data exists, initialize with zeros
+                sendScoreUpdate()
+            } catch (e: Exception) {
+                // Handle error
             }
         }
+    }
+
+    private fun updateScores(newLeft: Int, newRight: Int) {
+        if (leftScore != newLeft || rightScore != newRight) {
+            _scoreHistory.add(0, Pair(leftScore, rightScore))
+            if (_scoreHistory.size > 5) {
+                _scoreHistory.removeAt(5)
+            }
+        }
+        
+        leftScore = newLeft
+        rightScore = newRight
+        sendScoreUpdate()
+    }
+
+    private fun sendScoreUpdate() {
+        viewModelScope.launch {
+            try {
+                val request = PutDataMapRequest.create("/scores").apply {
+                    dataMap.putInt("left_score", leftScore)
+                    dataMap.putInt("right_score", rightScore)
+                }.asPutDataRequest()
+                    .setUrgent()
+
+                Wearable.getDataClient(getApplication()).putDataItem(request).await()
+            } catch (e: Exception) {
+                // Handle error
+            }
+        }
+    }
+
+    @SuppressLint("VisibleForTests")
+    override fun onDataChanged(dataEvents: DataEventBuffer) {
+        // Phone is source of truth, ignore data changes
     }
 
     override fun onMessageReceived(messageEvent: MessageEvent) {
         when (messageEvent.path) {
             "/request_scores" -> {
-                // Send current scores to the watch
-                viewModelScope.launch {
-                    try {
-                        val request = PutDataMapRequest.create("/scores").apply {
-                            dataMap.putInt("left_score", leftScore)
-                            dataMap.putInt("right_score", rightScore)
-                        }.asPutDataRequest()
-                            .setUrgent()
-
-                        Wearable.getDataClient(getApplication()).putDataItem(request).await()
-                    } catch (e: Exception) {
-                        // Handle error
-                    }
+                sendScoreUpdate()
+            }
+            "/increment_left" -> {
+                updateScores(leftScore + 1, rightScore)
+            }
+            "/decrement_left" -> {
+                if (leftScore > 0) {
+                    updateScores(leftScore - 1, rightScore)
                 }
+            }
+            "/increment_right" -> {
+                updateScores(leftScore, rightScore + 1)
+            }
+            "/decrement_right" -> {
+                if (rightScore > 0) {
+                    updateScores(leftScore, rightScore - 1)
+                }
+            }
+            "/reset_scores" -> {
+                updateScores(0, 0)
             }
         }
     }

@@ -34,10 +34,13 @@ import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.MessageClient
 import com.google.android.gms.wearable.MessageEvent
-import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withTimeout
 
 class MainViewModel(
     application: Application
@@ -47,24 +50,8 @@ class MainViewModel(
     MessageClient.OnMessageReceivedListener,
     CapabilityClient.OnCapabilityChangedListener {
 
-    init {
-        // Request current scores from phone when watch app starts
-        viewModelScope.launch {
-            try {
-                val nodes = Wearable.getNodeClient(application)
-                    .connectedNodes
-                    .await()
-
-                nodes.forEach { node ->
-                    Wearable.getMessageClient(application)
-                        .sendMessage(node.id, "/request_scores", byteArrayOf())
-                        .await()
-                }
-            } catch (e: Exception) {
-                // Handle error - if we can't get scores, we'll start at 0,0
-            }
-        }
-    }
+    private var _initialized = mutableStateOf(false)
+    val initialized: Boolean by _initialized
 
     var leftScore by mutableStateOf(0)
         private set
@@ -72,46 +59,76 @@ class MainViewModel(
     var rightScore by mutableStateOf(0)
         private set
 
+    init {
+        requestScores()
+    }
+
+    private fun requestScores() {
+        viewModelScope.launch {
+            try {
+                // Wait a bit for data listeners to be set up
+                delay(500)
+
+                val nodes = Wearable.getNodeClient(getApplication())
+                    .connectedNodes
+                    .await()
+
+                // Send request to all nodes
+                nodes.map { node ->
+                    async {
+                        Wearable.getMessageClient(getApplication())
+                            .sendMessage(node.id, "/request_scores", byteArrayOf())
+                            .await()
+                    }
+                }.awaitAll()
+
+                // Wait for response or timeout
+                withTimeout(3000) {
+                    while (!_initialized.value) {
+                        delay(100)
+                    }
+                }
+            } catch (e: Exception) {
+                // If we timeout or can't reach phone, just start at 0,0
+                _initialized.value = true
+            }
+        }
+    }
+
     fun incrementLeftScore() {
-        leftScore++
-        sendScoreUpdate()
+        sendScoreCommand("/increment_left")
     }
 
     fun decrementLeftScore() {
-        if (leftScore > 0) {
-            leftScore--
-            sendScoreUpdate()
-        }
+        sendScoreCommand("/decrement_left")
     }
 
     fun incrementRightScore() {
-        rightScore++
-        sendScoreUpdate()
+        sendScoreCommand("/increment_right")
     }
 
     fun decrementRightScore() {
-        if (rightScore > 0) {
-            rightScore--
-            sendScoreUpdate()
-        }
+        sendScoreCommand("/decrement_right")
     }
 
     fun resetScores() {
-        leftScore = 0
-        rightScore = 0
-        sendScoreUpdate()
+        sendScoreCommand("/reset_scores")
     }
 
-    private fun sendScoreUpdate() {
+    private fun sendScoreCommand(path: String) {
         viewModelScope.launch {
             try {
-                val request = PutDataMapRequest.create("/scores").apply {
-                    dataMap.putInt("left_score", leftScore)
-                    dataMap.putInt("right_score", rightScore)
-                }.asPutDataRequest()
-                    .setUrgent()
+                val nodes = Wearable.getNodeClient(getApplication())
+                    .connectedNodes
+                    .await()
 
-                Wearable.getDataClient(getApplication()).putDataItem(request).await()
+                nodes.map { node ->
+                    async {
+                        Wearable.getMessageClient(getApplication())
+                            .sendMessage(node.id, path, byteArrayOf())
+                            .await()
+                    }
+                }.awaitAll()
             } catch (e: Exception) {
                 // Handle error
             }
@@ -126,6 +143,7 @@ class MainViewModel(
                 val dataMap = DataMapItem.fromDataItem(dataEvent.dataItem).dataMap
                 leftScore = dataMap.getInt("left_score")
                 rightScore = dataMap.getInt("right_score")
+                _initialized.value = true
             }
         }
     }

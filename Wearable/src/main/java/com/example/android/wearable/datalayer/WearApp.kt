@@ -31,6 +31,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.wear.compose.material.CircularProgressIndicator
 import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
@@ -59,15 +60,24 @@ fun WearApp(mainViewModel: MainViewModel) {
 fun MainScreen(
     mainViewModel: MainViewModel
 ) {
-    MainScreen(
-        mainViewModel.leftScore,
-        mainViewModel.rightScore,
-        onLeftScoreClick = { mainViewModel.incrementLeftScore() },
-        onLeftScoreLongClick = { mainViewModel.decrementLeftScore() },
-        onRightScoreClick = { mainViewModel.incrementRightScore() },
-        onRightScoreLongClick = { mainViewModel.decrementRightScore() },
-        onResetLongClick = { mainViewModel.resetScores() }
-    )
+    if (!mainViewModel.initialized) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
+    } else {
+        MainScreen(
+            mainViewModel.leftScore,
+            mainViewModel.rightScore,
+            onLeftScoreClick = { mainViewModel.incrementLeftScore() },
+            onLeftScoreLongClick = { mainViewModel.decrementLeftScore() },
+            onRightScoreClick = { mainViewModel.incrementRightScore() },
+            onRightScoreLongClick = { mainViewModel.decrementRightScore() },
+            onResetLongClick = { mainViewModel.resetScores() }
+        )
+    }
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -94,18 +104,18 @@ fun MainScreen(
         ) {
             Text(
                 text = leftScore.toString(),
-                    style = MaterialTheme.typography.display1.copy(
-                        fontSize = 60.sp
+                style = MaterialTheme.typography.display1.copy(
+                    fontSize = 60.sp
+                ),
+                modifier = Modifier
+                    .weight(1f)
+                    .combinedClickable(
+                        onClick = onLeftScoreClick,
+                        onLongClick = onLeftScoreLongClick
                     ),
-                    modifier = Modifier
-                        .weight(1f)
-                        .combinedClickable(
-                            onClick = onLeftScoreClick,
-                            onLongClick = onLeftScoreLongClick
-                        ),
-                    textAlign = TextAlign.Center,
-                    maxLines = 1,
-                    softWrap = false
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                softWrap = false
             )
             Box(
                 modifier = Modifier
@@ -125,18 +135,18 @@ fun MainScreen(
             }
             Text(
                 text = rightScore.toString(),
-                    style = MaterialTheme.typography.display1.copy(
-                        fontSize = 60.sp
+                style = MaterialTheme.typography.display1.copy(
+                    fontSize = 60.sp
+                ),
+                modifier = Modifier
+                    .weight(1f)
+                    .combinedClickable(
+                        onClick = onRightScoreClick,
+                        onLongClick = onRightScoreLongClick
                     ),
-                    modifier = Modifier
-                        .weight(1f)
-                        .combinedClickable(
-                            onClick = onRightScoreClick,
-                            onLongClick = onRightScoreLongClick
-                        ),
-                    textAlign = TextAlign.Center,
-                    maxLines = 1,
-                    softWrap = false
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                softWrap = false
             )
         }
     }
