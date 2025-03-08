@@ -18,14 +18,21 @@ package com.example.android.wearable.datalayer
 import android.annotation.SuppressLint
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.material.MaterialTheme
+import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.wearable.CapabilityClient
 import com.google.android.gms.wearable.DataClient
 import com.google.android.gms.wearable.MessageClient
 import com.google.android.gms.wearable.Wearable
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 @SuppressLint("VisibleForTests")
 class MainActivity : ComponentActivity() {
@@ -43,7 +50,8 @@ class MainActivity : ComponentActivity() {
             MaterialTheme {
                 MainApp(
                     leftScore = clientDataViewModel.leftScore,
-                    rightScore = clientDataViewModel.rightScore
+                    rightScore = clientDataViewModel.rightScore,
+                    onStartWearableActivityClick = ::startWearableActivity
                 )
             }
         }
@@ -65,5 +73,35 @@ class MainActivity : ComponentActivity() {
         dataClient.removeListener(clientDataViewModel)
         messageClient.removeListener(clientDataViewModel)
         capabilityClient.removeListener(clientDataViewModel)
+    }
+
+    private fun startWearableActivity() {
+        lifecycleScope.launch {
+            try {
+                val nodes = capabilityClient
+                    .getCapability(WEAR_CAPABILITY, CapabilityClient.FILTER_REACHABLE)
+                    .await()
+                    .nodes
+
+                nodes.map { node ->
+                    async {
+                        messageClient.sendMessage(node.id, START_ACTIVITY_PATH, byteArrayOf())
+                            .await()
+                    }
+                }.awaitAll()
+
+                Log.d(TAG, "Starting activity requests sent successfully")
+            } catch (cancellationException: CancellationException) {
+                throw cancellationException
+            } catch (exception: Exception) {
+                Log.d(TAG, "Starting activity failed: $exception")
+            }
+        }
+    }
+
+    companion object {
+        private const val TAG = "MainActivity"
+        private const val START_ACTIVITY_PATH = "/start-activity"
+        private const val WEAR_CAPABILITY = "wear"
     }
 }

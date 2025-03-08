@@ -19,11 +19,15 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.Button
+import androidx.compose.material.Divider
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -31,7 +35,8 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun MainApp(
     leftScore: Int,
-    rightScore: Int
+    rightScore: Int,
+    onStartWearableActivityClick: () -> Unit
 ) {
     LazyColumn(contentPadding = PaddingValues(16.dp)) {
         item {
@@ -52,6 +57,18 @@ fun MainApp(
                     textAlign = TextAlign.Center
                 )
             }
+            Divider()
+        }
+        item {
+            Button(
+                onClick = onStartWearableActivityClick,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp)
+            ) {
+                Text(stringResource(id = R.string.start_wearable_activity))
+            }
+            Divider()
         }
     }
 }
@@ -61,6 +78,7 @@ fun MainApp(
 fun MainAppPreview() {
     MainApp(
         leftScore = 0,
-        rightScore = 0
+        rightScore = 0,
+        onStartWearableActivityClick = {}
     )
 }
