@@ -15,7 +15,7 @@
 -->
 <resources>
     <string name="app_name">DataLayer</string>
-    <string name="start_wearable_activity">Start Wearable Activity</string>
+    <string name="start_wearable_activity">Start Score Keeper on Phone</string>
     <string name="take_photo">Take a Photo</string>
     <string name="send_photo">Send Photo</string>
     <string name="photo_placeholder">Photo placeholder</string>

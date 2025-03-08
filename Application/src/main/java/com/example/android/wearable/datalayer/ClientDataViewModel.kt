@@ -16,11 +16,13 @@
 package com.example.android.wearable.datalayer
 
 import android.annotation.SuppressLint
+import android.app.Application
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
 import com.google.android.gms.wearable.CapabilityClient
 import com.google.android.gms.wearable.CapabilityInfo
 import com.google.android.gms.wearable.DataClient
@@ -29,9 +31,13 @@ import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.MessageClient
 import com.google.android.gms.wearable.MessageEvent
+import com.google.android.gms.wearable.PutDataMapRequest
+import com.google.android.gms.wearable.Wearable
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
-class ClientDataViewModel :
-    ViewModel(),
+class ClientDataViewModel(application: Application) :
+    AndroidViewModel(application),
     DataClient.OnDataChangedListener,
     MessageClient.OnMessageReceivedListener,
     CapabilityClient.OnCapabilityChangedListener {
@@ -69,7 +75,24 @@ class ClientDataViewModel :
     }
 
     override fun onMessageReceived(messageEvent: MessageEvent) {
-        // Not used
+        when (messageEvent.path) {
+            "/request_scores" -> {
+                // Send current scores to the watch
+                viewModelScope.launch {
+                    try {
+                        val request = PutDataMapRequest.create("/scores").apply {
+                            dataMap.putInt("left_score", leftScore)
+                            dataMap.putInt("right_score", rightScore)
+                        }.asPutDataRequest()
+                            .setUrgent()
+
+                        Wearable.getDataClient(getApplication()).putDataItem(request).await()
+                    } catch (e: Exception) {
+                        // Handle error
+                    }
+                }
+            }
+        }
     }
 
     override fun onCapabilityChanged(capabilityInfo: CapabilityInfo) {

@@ -23,6 +23,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.material.MaterialTheme
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.wearable.CapabilityClient
 import com.google.android.gms.wearable.DataClient
@@ -41,7 +43,13 @@ class MainActivity : ComponentActivity() {
     private val messageClient by lazy { Wearable.getMessageClient(this) }
     private val capabilityClient by lazy { Wearable.getCapabilityClient(this) }
 
-    private val clientDataViewModel by viewModels<ClientDataViewModel>()
+    private val clientDataViewModel by viewModels<ClientDataViewModel> { 
+        object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                return ClientDataViewModel(application) as T
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

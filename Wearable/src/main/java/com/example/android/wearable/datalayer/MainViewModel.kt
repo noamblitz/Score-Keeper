@@ -47,6 +47,25 @@ class MainViewModel(
     MessageClient.OnMessageReceivedListener,
     CapabilityClient.OnCapabilityChangedListener {
 
+    init {
+        // Request current scores from phone when watch app starts
+        viewModelScope.launch {
+            try {
+                val nodes = Wearable.getNodeClient(application)
+                    .connectedNodes
+                    .await()
+
+                nodes.forEach { node ->
+                    Wearable.getMessageClient(application)
+                        .sendMessage(node.id, "/request_scores", byteArrayOf())
+                        .await()
+                }
+            } catch (e: Exception) {
+                // Handle error - if we can't get scores, we'll start at 0,0
+            }
+        }
+    }
+
     var leftScore by mutableStateOf(0)
         private set
 
