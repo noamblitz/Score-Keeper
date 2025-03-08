@@ -15,7 +15,6 @@
  */
 package com.example.android.wearable.datalayer
 
-import android.annotation.SuppressLint
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
@@ -23,20 +22,15 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.material.MaterialTheme
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.wearable.CapabilityClient
 import com.google.android.gms.wearable.DataClient
 import com.google.android.gms.wearable.MessageClient
 import com.google.android.gms.wearable.Wearable
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
-@SuppressLint("VisibleForTests")
 class MainActivity : ComponentActivity() {
 
     private val dataClient by lazy { Wearable.getDataClient(this) }
@@ -44,8 +38,8 @@ class MainActivity : ComponentActivity() {
     private val capabilityClient by lazy { Wearable.getCapabilityClient(this) }
 
     private val clientDataViewModel by viewModels<ClientDataViewModel> { 
-        object : ViewModelProvider.Factory {
-            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        object : androidx.lifecycle.ViewModelProvider.Factory {
+            override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
                 return ClientDataViewModel(application) as T
             }
         }
@@ -60,7 +54,26 @@ class MainActivity : ComponentActivity() {
                     leftScore = clientDataViewModel.leftScore,
                     rightScore = clientDataViewModel.rightScore,
                     scoreHistory = clientDataViewModel.scoreHistory,
-                    onStartWearableActivityClick = ::startWearableActivity
+                    onStartWearableActivityClick = ::startWearableActivity,
+                    onLeftScoreClick = { 
+                        clientDataViewModel.updateScores(clientDataViewModel.leftScore + 1, clientDataViewModel.rightScore)
+                    },
+                    onLeftScoreLongClick = { 
+                        if (clientDataViewModel.leftScore > 0) {
+                            clientDataViewModel.updateScores(clientDataViewModel.leftScore - 1, clientDataViewModel.rightScore)
+                        }
+                    },
+                    onRightScoreClick = { 
+                        clientDataViewModel.updateScores(clientDataViewModel.leftScore, clientDataViewModel.rightScore + 1)
+                    },
+                    onRightScoreLongClick = { 
+                        if (clientDataViewModel.rightScore > 0) {
+                            clientDataViewModel.updateScores(clientDataViewModel.leftScore, clientDataViewModel.rightScore - 1)
+                        }
+                    },
+                    onResetLongClick = { 
+                        clientDataViewModel.updateScores(0, 0)
+                    }
                 )
             }
         }
@@ -92,12 +105,10 @@ class MainActivity : ComponentActivity() {
                     .await()
                     .nodes
 
-                nodes.map { node ->
-                    async {
-                        messageClient.sendMessage(node.id, START_ACTIVITY_PATH, byteArrayOf())
-                            .await()
-                    }
-                }.awaitAll()
+                nodes.forEach { node ->
+                    messageClient.sendMessage(node.id, START_ACTIVITY_PATH, byteArrayOf())
+                        .await()
+                }
 
                 Log.d(TAG, "Starting activity requests sent successfully")
             } catch (cancellationException: CancellationException) {

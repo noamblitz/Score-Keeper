@@ -79,7 +79,7 @@ class ClientDataViewModel(application: Application) :
         }
     }
 
-    private fun updateScores(newLeft: Int, newRight: Int) {
+    fun updateScores(newLeft: Int, newRight: Int) {
         if (leftScore != newLeft || rightScore != newRight) {
             _scoreHistory.add(0, Pair(leftScore, rightScore))
             if (_scoreHistory.size > 5) {

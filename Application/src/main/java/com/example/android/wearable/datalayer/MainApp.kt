@@ -15,6 +15,8 @@
  */
 package com.example.android.wearable.datalayer
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,47 +24,36 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.Button
+import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun MainApp(
     leftScore: Int,
     rightScore: Int,
     scoreHistory: List<Pair<Int, Int>>,
-    onStartWearableActivityClick: () -> Unit
+    onStartWearableActivityClick: () -> Unit,
+    onLeftScoreClick: () -> Unit = {},
+    onLeftScoreLongClick: () -> Unit = {},
+    onRightScoreClick: () -> Unit = {},
+    onRightScoreLongClick: () -> Unit = {},
+    onResetLongClick: () -> Unit = {}
 ) {
-    val configuration = LocalConfiguration.current
-    val isPortrait = configuration.screenWidthDp < configuration.screenHeightDp
-    
-    fun calculateFontSize(score: Int): Int {
-        val digitCount = score.toString().length
-        val baseSize = if (isPortrait) {
-            when (digitCount) {
-                1 -> 200
-                2 -> 160
-                else -> 120
-            }
-        } else {
-            when (digitCount) {
-                1 -> 120
-                2 -> 100
-                else -> 80
-            }
-        }
-        return baseSize
-    }
+    val isPortrait = LocalConfiguration.current.screenWidthDp < LocalConfiguration.current.screenHeightDp
     
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -83,9 +74,14 @@ fun MainApp(
                 Text(
                     text = leftScore.toString(),
                     style = MaterialTheme.typography.h1.copy(
-                        fontSize = calculateFontSize(leftScore).sp
+                        fontSize = calculateFontSize(leftScore, isPortrait).sp
                     ),
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .combinedClickable(
+                            onClick = onLeftScoreClick,
+                            onLongClick = onLeftScoreLongClick
+                        ),
                     textAlign = TextAlign.Center,
                     maxLines = 1,
                     softWrap = false
@@ -98,10 +94,27 @@ fun MainApp(
                         .padding(horizontal = 4.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    Box(
+                        modifier = Modifier
+                            .size(24.dp)
+                            .combinedClickable(
+                                onClick = {},
+                                onLongClick = onResetLongClick
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_refresh),
+                            contentDescription = "Reset scores",
+                            tint = MaterialTheme.colors.primary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
                     Text(
                         text = "History",
                         style = MaterialTheme.typography.caption,
-                        fontSize = 10.sp
+                        fontSize = 10.sp,
+                        modifier = Modifier.padding(vertical = 4.dp)
                     )
                     scoreHistory.forEach { (left, right) ->
                         Row(
@@ -129,22 +142,44 @@ fun MainApp(
                 Text(
                     text = rightScore.toString(),
                     style = MaterialTheme.typography.h1.copy(
-                        fontSize = calculateFontSize(rightScore).sp
+                        fontSize = calculateFontSize(rightScore, isPortrait).sp
                     ),
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .combinedClickable(
+                            onClick = onRightScoreClick,
+                            onLongClick = onRightScoreLongClick
+                        ),
                     textAlign = TextAlign.Center,
                     maxLines = 1,
                     softWrap = false
                 )
             }
             
-            Button(
+            androidx.compose.material.Button(
                 onClick = onStartWearableActivityClick,
                 modifier = Modifier
                     .padding(8.dp)
             ) {
                 Text(stringResource(id = R.string.start_wearable_activity))
             }
+        }
+    }
+}
+
+private fun calculateFontSize(score: Int, isPortrait: Boolean): Int {
+    val digitCount = score.toString().length
+    return if (isPortrait) {
+        when (digitCount) {
+            1 -> 200
+            2 -> 160
+            else -> 120
+        }
+    } else {
+        when (digitCount) {
+            1 -> 120
+            2 -> 100
+            else -> 80
         }
     }
 }
