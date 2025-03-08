@@ -39,6 +39,7 @@ import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.MessageClient
 import com.google.android.gms.wearable.MessageEvent
+import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -67,7 +68,39 @@ class MainViewModel(
     var image by mutableStateOf<Bitmap?>(null)
         private set
 
+    var leftScore by mutableStateOf(0)
+        private set
+
+    var rightScore by mutableStateOf(0)
+        private set
+
     private var loadPhotoJob: Job = Job().apply { complete() }
+
+    fun incrementLeftScore() {
+        leftScore++
+        sendScoreUpdate()
+    }
+
+    fun incrementRightScore() {
+        rightScore++
+        sendScoreUpdate()
+    }
+
+    private fun sendScoreUpdate() {
+        viewModelScope.launch {
+            try {
+                val request = PutDataMapRequest.create("/scores").apply {
+                    dataMap.putInt("left_score", leftScore)
+                    dataMap.putInt("right_score", rightScore)
+                }.asPutDataRequest()
+                    .setUrgent()
+
+                Wearable.getDataClient(getApplication()).putDataItem(request).await()
+            } catch (e: Exception) {
+                // Handle error
+            }
+        }
+    }
 
     @SuppressLint("VisibleForTests")
     override fun onDataChanged(dataEvents: DataEventBuffer) {
@@ -100,6 +133,11 @@ class MainViewModel(
                                         .getAsset(DataLayerListenerService.IMAGE_KEY)
                                 )
                             }
+                        }
+                        "/scores" -> {
+                            val dataMap = DataMapItem.fromDataItem(dataEvent.dataItem).dataMap
+                            leftScore = dataMap.getInt("left_score")
+                            rightScore = dataMap.getInt("right_score")
                         }
                     }
                 }

@@ -18,8 +18,11 @@ package com.example.android.wearable.datalayer
 import android.graphics.Bitmap
 import android.graphics.Color
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -81,8 +84,12 @@ fun MainScreen(
     MainScreen(
         mainViewModel.image,
         mainViewModel.events,
+        mainViewModel.leftScore,
+        mainViewModel.rightScore,
         onShowNodesList,
-        onShowCameraNodesList
+        onShowCameraNodesList,
+        onLeftScoreClick = { mainViewModel.incrementLeftScore() },
+        onRightScoreClick = { mainViewModel.incrementRightScore() }
     )
 }
 
@@ -91,8 +98,12 @@ fun MainScreen(
 fun MainScreen(
     image: Bitmap?,
     events: List<Event>,
+    leftScore: Int,
+    rightScore: Int,
     onShowNodesList: () -> Unit,
-    onShowCameraNodesList: () -> Unit
+    onShowCameraNodesList: () -> Unit,
+    onLeftScoreClick: () -> Unit,
+    onRightScoreClick: () -> Unit
 ) {
     val columnState = rememberResponsiveColumnState(
         contentPadding = ScalingLazyColumnDefaults.padding(
@@ -110,6 +121,29 @@ fun MainScreen(
             columnState = columnState,
             modifier = Modifier
         ) {
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    Text(
+                        text = leftScore.toString(),
+                        style = MaterialTheme.typography.display2,
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable(onClick = onLeftScoreClick),
+                        textAlign = TextAlign.Center
+                    )
+                    Text(
+                        text = rightScore.toString(),
+                        style = MaterialTheme.typography.display2,
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable(onClick = onRightScoreClick),
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
             item {
                 Chip(
                     label = stringResource(id = R.string.query_other_devices),
@@ -215,8 +249,12 @@ fun MainScreenPreviewEvents() {
         image = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888).apply {
             eraseColor(Color.WHITE)
         },
+        leftScore = 0,
+        rightScore = 0,
         onShowCameraNodesList = {},
-        onShowNodesList = {}
+        onShowNodesList = {},
+        onLeftScoreClick = {},
+        onRightScoreClick = {}
     )
 }
 
@@ -227,7 +265,11 @@ fun MainScreenPreviewEmpty() {
     MainScreen(
         events = emptyList(),
         image = null,
+        leftScore = 0,
+        rightScore = 0,
         onShowCameraNodesList = {},
-        onShowNodesList = {}
+        onShowNodesList = {},
+        onLeftScoreClick = {},
+        onRightScoreClick = {}
     )
 }
