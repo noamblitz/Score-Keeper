@@ -17,6 +17,7 @@ package com.example.android.wearable.datalayer
 
 import android.annotation.SuppressLint
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
@@ -41,14 +42,28 @@ class ClientDataViewModel :
     var rightScore by mutableStateOf(0)
         private set
 
+    private val _scoreHistory = mutableStateListOf<Pair<Int, Int>>()
+    val scoreHistory: List<Pair<Int, Int>> = _scoreHistory
+
     @SuppressLint("VisibleForTests")
     override fun onDataChanged(dataEvents: DataEventBuffer) {
         dataEvents.forEach { dataEvent ->
             if (dataEvent.type == DataEvent.TYPE_CHANGED && 
                 dataEvent.dataItem.uri.path == "/scores") {
                 val dataMap = DataMapItem.fromDataItem(dataEvent.dataItem).dataMap
-                leftScore = dataMap.getInt("left_score")
-                rightScore = dataMap.getInt("right_score")
+                val newLeftScore = dataMap.getInt("left_score")
+                val newRightScore = dataMap.getInt("right_score")
+                
+                // Only add to history if scores changed
+                if (leftScore != newLeftScore || rightScore != newRightScore) {
+                    _scoreHistory.add(0, Pair(leftScore, rightScore))
+                    if (_scoreHistory.size > 5) {
+                        _scoreHistory.removeAt(5)
+                    }
+                }
+                
+                leftScore = newLeftScore
+                rightScore = newRightScore
             }
         }
     }

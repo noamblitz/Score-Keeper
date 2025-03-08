@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
@@ -39,6 +40,7 @@ import androidx.compose.ui.unit.sp
 fun MainApp(
     leftScore: Int,
     rightScore: Int,
+    scoreHistory: List<Pair<Int, Int>>,
     onStartWearableActivityClick: () -> Unit
 ) {
     val isPortrait = LocalConfiguration.current.screenWidthDp < LocalConfiguration.current.screenHeightDp
@@ -67,6 +69,42 @@ fun MainApp(
                     modifier = Modifier.weight(1f),
                     textAlign = TextAlign.Center
                 )
+                
+                // Score History
+                Column(
+                    modifier = Modifier
+                        .width(60.dp)
+                        .padding(horizontal = 4.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "History",
+                        style = MaterialTheme.typography.caption,
+                        fontSize = 10.sp
+                    )
+                    scoreHistory.forEach { (left, right) ->
+                        Row(
+                            horizontalArrangement = Arrangement.SpaceEvenly,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = left.toString(),
+                                style = MaterialTheme.typography.caption,
+                                fontSize = 12.sp,
+                                modifier = Modifier.weight(1f),
+                                textAlign = TextAlign.Center
+                            )
+                            Text(
+                                text = right.toString(),
+                                style = MaterialTheme.typography.caption,
+                                fontSize = 12.sp,
+                                modifier = Modifier.weight(1f),
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+                }
+                
                 Text(
                     text = rightScore.toString(),
                     style = MaterialTheme.typography.h1.copy(
@@ -76,6 +114,7 @@ fun MainApp(
                     textAlign = TextAlign.Center
                 )
             }
+            
             Button(
                 onClick = onStartWearableActivityClick,
                 modifier = Modifier
@@ -93,6 +132,12 @@ fun MainAppPreview() {
     MainApp(
         leftScore = 0,
         rightScore = 0,
+        scoreHistory = listOf(
+            Pair(1, 2),
+            Pair(1, 1),
+            Pair(0, 1),
+            Pair(0, 0)
+        ),
         onStartWearableActivityClick = {}
     )
 }

@@ -51,6 +51,7 @@ class MainActivity : ComponentActivity() {
                 MainApp(
                     leftScore = clientDataViewModel.leftScore,
                     rightScore = clientDataViewModel.rightScore,
+                    scoreHistory = clientDataViewModel.scoreHistory,
                     onStartWearableActivityClick = ::startWearableActivity
                 )
             }
